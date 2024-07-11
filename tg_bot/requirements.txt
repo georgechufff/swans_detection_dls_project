@@ -1,0 +1,4 @@
+ultralytics
+python-telegram-bot
+opencv-python
+supervision

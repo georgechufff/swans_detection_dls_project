@@ -1,0 +1,7 @@
+services:
+  server:
+    image: tg-bot:0.0.1
+    build: tg_bot/
+#    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - '8000:8000'
