@@ -29,11 +29,11 @@ $ docker compose up
 
 ## <a id="title3">Часть 3. Демонстрация работы</a>
 
-<img src="../screencast/screencast.gif" width="600" height="400">
+![](https://github.com/georgechufff/swans_detection_dls_project/blob/main/screencast/screencast.gif)
 
 ## <a id="title3">Часть 4. Стек технологий</a>
 
 **Используемый стек технологий:**
-* Telegram Bot API
+* Python Telegram Bot API
 * YOLO
 * Docker Compose
