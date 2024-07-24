@@ -9,6 +9,7 @@ from PIL import Image
 from responses import *
 
 from dotenv import dotenv_values
+from pathlib import Path
 
 
 config = dotenv_values(".env")
@@ -20,11 +21,21 @@ model = YOLO("ml/best.pt")
 def create_dirs():
     os.mkdir('media')
     for folder in ['images', 'zips']:
-        print(folder)
+        # print(folder)
         os.makedirs(os.path.join('media', folder))
         if folder == 'images':
             for version in ['annotated', 'raw']:
                 os.makedirs(os.path.join('media', folder, version))
+
+
+def remove_dir(directory):
+    directory = Path(directory)
+    for item in directory.iterdir():
+        if item.is_dir():
+            remove_dir(item)
+        else:
+            item.unlink()
+    directory.rmdir()
 
 
 def run_yolo(yolo, image_url, conf=0.25, iou=0.7):
@@ -68,6 +79,7 @@ def image_handler(update, context):
     img.save(os.path.join('media/images', 'annotated', f'{file.file_unique_id}.jpg'), format="JPEG")
     context.bot.send_photo(chat_id=chat_id, photo=open(os.path.join('media/images', 'annotated',
                                                            f'{file.file_unique_id}.jpg'), 'rb'))
+    remove_dir(Path('media/'))
 
 
 def zip_handler(update, context):
@@ -88,26 +100,25 @@ def zip_handler(update, context):
     raw_images = [os.path.join(raw_images, i) for i in os.listdir(raw_images)]
 
     for raw_image in raw_images:
-        annotated_image = run_yolo(model, raw_image)
-        annotated_image.save(os.path.join('media/images', 'annotated',
-                                          os.path.basename(raw_image)), format="JPEG")
+        if Path(raw_image).suffix.lower() in ['.jpg', '.png', '.jpeg']:
+            annotated_image = run_yolo(model, raw_image)
+            annotated_image.save(os.path.join('media/images', 'annotated',
+                                              os.path.basename(raw_image)), format="JPEG")
 
-        with ZipFile('media/zips/processed.zip', 'a') as cur_zipfile:
-            cur_zipfile.write(
-                os.path.join('media/images', 'annotated', os.path.basename(raw_image)),
-                os.path.basename(raw_image)
-            )
+            with ZipFile('media/zips/processed.zip', 'a') as cur_zipfile:
+                cur_zipfile.write(
+                    os.path.join('media/images', 'annotated', os.path.basename(raw_image)),
+                    os.path.basename(raw_image)
+                )
+    try:
+        with open('media/zips/processed.zip', 'rb') as document:
+            context.bot.send_document(chat_id, document)
 
-    # file = update.message.photo[-1].get_file()
-    # print(file)
-    # img_path = os.path.join('media/images', 'raw', f'{file.file_unique_id}.jpg')
-    # file.download(img_path)
+    except FileNotFoundError:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='К сожалению, в данном архиве нет фотографий подходящего формата.')
 
-    # img.save(os.path.join('media/images', 'annotated', f'{file.file_unique_id}.jpg'), format="JPEG")
-    # context.bot.send(chat_id=chat_id, photo=open(os.path.join('media/images', 'annotated',
-    #                                                                 f'{file.file_unique_id}.jpg'), 'rb'))
-    with open('media/zips/processed.zip', 'rb') as document:
-        context.bot.send_document(chat_id, document, )
+    remove_dir(Path('media/'))
 
 
 def main():

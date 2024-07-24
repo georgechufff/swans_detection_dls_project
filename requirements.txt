@@ -1,0 +1,5 @@
+ultralytics
+python-telegram-bot==13.13
+opencv-python
+supervision
+python-dotenv
